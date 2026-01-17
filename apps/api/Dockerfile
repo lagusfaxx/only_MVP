@@ -6,6 +6,7 @@ RUN npm install
 COPY apps/api ./apps/api
 COPY prisma ./prisma
 WORKDIR /app/apps/api
+RUN npx prisma generate
 RUN npm run build
 
 FROM node:18-alpine
