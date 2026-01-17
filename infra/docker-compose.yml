@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: only_user
+      POSTGRES_PASSWORD: only_password_dev123
+      POSTGRES_DB: only_mvp
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U only_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../
+      dockerfile: ./apps/api/Dockerfile
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://only_user:only_password_dev123@postgres:5432/only_mvp
+      NODE_ENV: development
+      APP_URL: http://localhost:3000
+      API_URL: http://localhost:3001
+      SESSION_SECRET: dev-secret-change-production
+      CORS_ORIGINS: http://localhost:3000
+
+  web:
+    build:
+      context: ../
+      dockerfile: ./apps/web/Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NODE_ENV: development
+
+volumes:
+  postgres_data:
