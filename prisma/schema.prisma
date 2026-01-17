@@ -12,10 +12,17 @@ model User {
   email String @unique
   passwordHash String
   fullName String?
+  profileImage String?
+  bio String?
   isAdmin Boolean @default(false)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   posts Post[]
   sessions Session[]
+  payments Payment[]
+  memberships Membership[]
+
   @@map("users")
 }
 
@@ -25,6 +32,8 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessionToken String @unique
   expiresAt DateTime
+  createdAt DateTime @default(now())
+
   @@map("sessions")
 }
 
@@ -35,7 +44,12 @@ model Post {
   title String
   content String @db.Text
   imageUrl String?
+  imageKey String?
+  isPublished Boolean @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId])
   @@map("posts")
 }
 
@@ -45,6 +59,9 @@ model Membership {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   isActive Boolean @default(false)
   expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("memberships")
 }
 
@@ -57,7 +74,25 @@ model Payment {
   amount Float
   currency String @default("CLP")
   description String
+  khipuPaymentUrl String?
   status String @default("pending")
+  webhookAttempts Int @default(0)
+  lastWebhookAt DateTime?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([khipuTransactionId])
   @@map("payments")
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+  action String
+  userId String?
+  metadata Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("audit_logs")
 }
